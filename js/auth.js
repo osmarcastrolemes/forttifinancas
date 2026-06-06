@@ -1,5 +1,5 @@
 // Altere para a URL do seu back-end no Render quando fizer o deploy
-const API_URL = 'https://onrender.com';
+const API_URL = 'https://sistema-financas-backend.onrender.com';
 
 // --- LOGICA DE CADASTRO ---
 const cadastroForm = document.getElementById('cadastroForm');
