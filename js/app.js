@@ -22,7 +22,7 @@ configurarLogout('logoutBtn2');
 configurarLogout('logoutBtn3');
 
 
-// --- DASHBOARD ---
+// --- DASHBOARD (ATUALIZADO: ORDENAÇÃO E ALINHAMENTO) ---
 const carregarDashboardGeral = async () => {
   const totalBalance = document.getElementById('totalBalance');
   const historyList = document.getElementById('historyList');
@@ -41,30 +41,43 @@ const carregarDashboardGeral = async () => {
 
       if (transacoes.length === 0) {
         historyList.innerHTML = '<li class="history-item">Nenhum lançamento encontrado.</li>';
+        totalBalance.innerText = "R$ 0,00";
+        return;
       }
 
+      // 1. PASSO IMPORTANTE: Calcula o saldo total baseado na lista completa original
       transacoes.forEach(t => {
         const valorNum = parseFloat(t.valor);
-
         if (t.tipo === 'receita') saldoTotal += valorNum;
         else saldoTotal -= valorNum;
+      });
 
+      // 2. ORDENAÇÃO: Cria uma cópia e põe as receitas no topo da lista visual
+      const transacoesOrdenadas = [...transacoes].sort((a, b) => {
+        if (a.tipo === 'receita' && b.tipo === 'despesa') return -1;
+        if (a.tipo === 'despesa' && b.tipo === 'receita') return 1;
+        return 0;
+      });
+
+      // 3. RENDERIZAÇÃO: Monta os itens ordenados na tela com as novas classes limpas
+      transacoesOrdenadas.forEach(t => {
+        const valorNum = parseFloat(t.valor);
         const dataFormatada = new Date(t.data_transacao)
           .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
-        li.className = 'history-item';
+        li.className = 'history-item'; // Garante o flexbox no CSS
+
         li.innerHTML = `
-          <div style="flex-grow: 1; text-align: left;">
-            <strong>${t.categoria_nome}</strong><br>
+          <div class="info-esquerda">
+            <strong>${t.categoria_nome}</strong>
             <small>${t.descricao || ''} (${dataFormatada})</small>
           </div>
-          <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="info-direita">
             <span class="item-amount ${t.tipo}">
               ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
             </span>
-            <button onclick="excluirTransacao(${t.id}, 'dashboard')"
-              style="background:none;color:#d32f2f;border:none;cursor:pointer;">
+            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'dashboard')">
               🗑️
             </button>
           </div>
@@ -72,6 +85,7 @@ const carregarDashboardGeral = async () => {
         historyList.appendChild(li);
       });
 
+      // Atualiza o valor do card e a cor de fundo baseado no saldo total acumulado
       totalBalance.innerText = `R$ ${saldoTotal.toFixed(2).replace('.', ',')}`;
 
       const balanceCard = document.querySelector('.balance-card');
