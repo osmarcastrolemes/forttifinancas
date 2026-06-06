@@ -38,10 +38,12 @@ body {
   background: var(--surface);
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: 24px 24px 84px 24px; /* AJUSTADO: Espaço extra no fundo para a barra de menu não cobrir o conteúdo */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  margin: auto 0; /* Centraliza verticalmente o card no espaço disponível */
+  margin: 20px auto; /* AJUSTADO: Centraliza na horizontal e remove o esmagamento vertical */
+  position: relative; /* AJUSTADO: Mantém o menu preso estritamente ao rodapé deste container */
+  min-height: calc(100vh - 40px); /* AJUSTADO: Ocupa quase a tela inteira de forma harmônica */
 }
 
 .app-header p {
@@ -204,16 +206,19 @@ button:hover, .btn-submit:hover {
 }
 
 .nav-bottom {
-  position: absolute;
+  position: absolute; /* AJUSTADO: Fixa no rodapé absoluto do container pai */
   bottom: 0;
   left: 0;
   width: 100%;
   height: 60px;
   background: white;
   border-top: 1px solid #eee;
+  border-bottom-left-radius: 12px; /* AJUSTADO: Mantém o visual arredondado do card */
+  border-bottom-right-radius: 12px; /* AJUSTADO: Mantém o visual arredondado do card */
   display: flex;
   justify-content: space-around;
   align-items: center;
+  z-index: 10; /* AJUSTADO: Garante que fique acima de qualquer rolagem da lista */
 }
 
 .nav-bottom a {
