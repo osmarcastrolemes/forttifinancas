@@ -94,27 +94,77 @@ button {
   text-align: center;
 }
 
+/* --- HISTÓRICO RECENTE AJUSTADO --- */
 .history-list {
   list-style: none;
   overflow-y: auto;
   flex-grow: 1;
 }
 
+/* O container principal distribui o bloco de texto para a esquerda e o preço para a direita */
 .history-item {
   display: flex;
   justify-content: space-between;
-  padding: 14px;
-  border-bottom: 1px solid #eee;
   align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* Bloco da esquerda força o alinhamento do título e do subtítulo */
+.info-esquerda {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  max-width: 60%; /* Evita que descrições longas apertem o preço */
+}
+
+.info-esquerda strong {
+  font-size: 16px;
+  color: #333;
+}
+
+.info-esquerda small {
+  font-size: 13px;
+  color: #777;
+  margin-top: 2px;
+}
+
+/* Bloco da direita trava o preço e a lixeira juntos rigidamente na horizontal */
+.info-direita {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px; /* Espaço fixo perfeito entre o R$ e a lixeira */
+  white-space: nowrap; /* Impede a quebra de linha de qualquer valor */
 }
 
 .item-amount {
   font-weight: bold;
+  font-size: 16px;
 }
 
-.item-amount.despesa { color: var(--expense); }
-.item-amount.receita { color: var(--revenue); }
+.item-amount.despesa { 
+  color: var(--expense); 
+}
 
+.item-amount.receita { 
+  color: var(--revenue); 
+}
+
+/* Remove os estilos pesados nativos do botão da lixeira */
+.btn-deletar-dash {
+  background: none;
+  color: var(--expense);
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- NAVEGAÇÃO INFERIOR --- */
 .nav-bottom {
   position: absolute;
   bottom: 0;
