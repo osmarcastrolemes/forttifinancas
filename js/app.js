@@ -1,4 +1,4 @@
-const API_URL = 'https://sistema-financas-backend.onrender.com';
+const API_URL = 'https://onrender.com';
 const token = localStorage.getItem('token');
 
 // Se não estiver logado, redireciona
@@ -101,7 +101,7 @@ const carregarDashboardGeral = async () => {
 };
 
 
-// --- RELATÓRIO MENSAL (ATUALIZADO: POPULAÇÃO DE MESES E FORMATAÇÃO BR) ---
+// --- RELATÓRIO MENSAL (ATUALIZADO) ---
 const carregarRelatorioMensal = async () => {
   const lista = document.getElementById('listaRelatorioMes');
   const filtro = document.getElementById('filtroMesRelatorio');
@@ -115,19 +115,15 @@ const carregarRelatorioMensal = async () => {
     const transacoes = await response.json();
 
     if (response.ok) {
-      // 1. POPULAR OS MESES DINAMICAMENTE (Caso a lista de opções esteja vazia)
-      if (filtro.options.length <= 1 && transacoes.length > 0) {
-        // Extrai todos os anos/meses únicos (ex: "2026-06") presentes nas transações
+      // 1. POPULAR OS MESES DINAMICAMENTE
+      if (filtro.options.length <= 0 && transacoes.length > 0) {
         const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao.substring(0, 7)))];
         
-        // Ordena do mês mais recente para o mais antigo
         mesesDisponiveis.sort((a, b) => b.localeCompare(a));
-
-        filtro.innerHTML = ''; // Limpa o elemento
+        filtro.innerHTML = ''; 
 
         mesesDisponiveis.forEach(anoMes => {
           const [ano, mes] = anoMes.split('-');
-          // Converte o número do mês em nome por extenso em português
           const dataObjeto = new Date(ano, parseInt(mes) - 1, 1);
           const nomeMes = dataObjeto.toLocaleDateString('pt-BR', { month: 'long' });
           const nomeMesCapitalizado = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
@@ -138,11 +134,9 @@ const carregarRelatorioMensal = async () => {
           filtro.appendChild(option);
         });
 
-        // Configura a escuta para atualizar os valores sempre que mudar o select
         filtro.onchange = () => carregarRelatorioMensal();
       }
 
-      // Se não houver dados, define o mês padrão corrente
       if (filtro.options.length === 0) {
         const mesAtualStr = new Date().toISOString().substring(0, 7);
         const option = document.createElement('option');
@@ -151,7 +145,7 @@ const carregarRelatorioMensal = async () => {
         filtro.appendChild(option);
       }
 
-      // 2. FILTRAGEM E RENDERIZAÇÃO DOS DADOS
+      // 2. FILTRAGEM E RENDERIZAÇÃO
       const mesSelecionado = filtro.value;
       let entradas = 0;
       let saidas = 0;
@@ -169,21 +163,18 @@ const carregarRelatorioMensal = async () => {
         return;
       }
 
-      // Calcula os acumulados do mês selecionado
       filtradas.forEach(t => {
         const valor = parseFloat(t.valor);
         if (t.tipo === 'receita') entradas += valor;
         else saidas += valor;
       });
 
-      // ORDENAÇÃO: Coloca receitas no topo no relatório mensal também
       const filtradasEOrdenadas = [...filtradas].sort((a, b) => {
         if (a.tipo === 'receita' && b.tipo === 'despesa') return -1;
         if (a.tipo === 'despesa' && b.tipo === 'receita') return 1;
         return 0;
       });
 
-      // Renderiza as linhas usando os novos blocos e classes CSS de alinhamento
       filtradasEOrdenadas.forEach(t => {
         const valorNum = parseFloat(t.valor);
         const dataFormatada = new Date(t.data_transacao)
@@ -209,7 +200,6 @@ const carregarRelatorioMensal = async () => {
         lista.appendChild(li);
       });
 
-      // Aplica a formatação em Real brasileiro (R$ 0,00) nos blocos superiores
       document.getElementById('resumoReceitas').innerText = `R$ ${entradas.toFixed(2).replace('.', ',')}`;
       document.getElementById('resumoDespesas').innerText = `R$ ${saidas.toFixed(2).replace('.', ',')}`;
       
@@ -287,3 +277,12 @@ if (form) {
 }
 
 
+// --- INIT ---
+document.addEventListener('DOMContentLoaded', () => {
+  carregarDashboardGeral();
+  carregarRelatorioMensal();
+  carregarCategoriasForm();
+
+  const input = document.getElementById('data');
+  if (input) input.value = new Date().toISOString().split('T')[0];
+});
