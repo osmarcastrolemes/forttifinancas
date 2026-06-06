@@ -21,18 +21,29 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  flex-direction: column; /* Permite empilhar o container e o footer */
 }
 
+/* Container adaptado para a tela de Login */
 .app-container {
   width: 100%;
   max-width: 412px;
-  min-height: 100vh;
   background: var(--surface);
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  position: relative;
-  padding-bottom: 80px; /* Espaço para a barra inferior */
+  padding: 32px 24px;
+  border-radius: 12px; /* Cantos arredondados elegantes no card */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Sombra leve */
+  margin-bottom: 20px; /* Separação para o rodapé */
+}
+
+/* Subtítulo adicionado */
+.app-header p {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-top: -16px;
+  margin-bottom: 24px;
 }
 
 h2 {
@@ -58,6 +69,12 @@ h2 {
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 16px;
+  background-color: #fcfcfc;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 button {
@@ -71,11 +88,16 @@ button {
   font-weight: bold;
   cursor: pointer;
   margin-top: 12px;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background-color: #215d25;
 }
 
 .link-alt {
   text-align: center;
-  margin-top: 16px;
+  margin-top: 20px;
   font-size: 14px;
 }
 
@@ -85,6 +107,21 @@ button {
   font-weight: bold;
 }
 
+.link-alt a:hover {
+  text-decoration: underline;
+}
+
+/* --- NOVO RODAPÉ AJUSTADO --- */
+.app-footer {
+  width: 100%;
+  max-width: 412px;
+  text-align: center;
+  padding: 12px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* --- MANUTENÇÃO DOS SEUS ESTILOS DO DASHBOARD (Preservados para as outras telas) --- */
 .balance-card {
   background: linear-gradient(135deg, #388e3c, #2e7d32);
   color: white;
@@ -94,14 +131,12 @@ button {
   text-align: center;
 }
 
-/* --- HISTÓRICO RECENTE AJUSTADO --- */
 .history-list {
   list-style: none;
   overflow-y: auto;
   flex-grow: 1;
 }
 
-/* O container principal distribui o bloco de texto para a esquerda e o preço para a direita */
 .history-item {
   display: flex;
   justify-content: space-between;
@@ -110,12 +145,11 @@ button {
   border-bottom: 1px solid #eee;
 }
 
-/* Bloco da esquerda força o alinhamento do título e do subtítulo */
 .info-esquerda {
   display: flex;
   flex-direction: column;
   text-align: left;
-  max-width: 60%; /* Evita que descrições longas apertem o preço */
+  max-width: 60%;
 }
 
 .info-esquerda strong {
@@ -129,13 +163,12 @@ button {
   margin-top: 2px;
 }
 
-/* Bloco da direita trava o preço e a lixeira juntos rigidamente na horizontal */
-.info-direita {
+.info-white {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px; /* Espaço fixo perfeito entre o R$ e a lixeira */
-  white-space: nowrap; /* Impede a quebra de linha de qualquer valor */
+  gap: 16px;
+  white-space: nowrap;
 }
 
 .item-amount {
@@ -151,7 +184,6 @@ button {
   color: var(--revenue); 
 }
 
-/* Remove os estilos pesados nativos do botão da lixeira */
 .btn-deletar-dash {
   background: none;
   color: var(--expense);
@@ -164,7 +196,6 @@ button {
   justify-content: center;
 }
 
-/* --- NAVEGAÇÃO INFERIOR --- */
 .nav-bottom {
   position: absolute;
   bottom: 0;
