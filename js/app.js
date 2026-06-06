@@ -101,11 +101,11 @@ const carregarDashboardGeral = async () => {
 };
 
 
-// --- RELATÓRIO MENSAL ---
+// --- RELATÓRIO MENSAL (ATUALIZADO: POPULAÇÃO DE MESES E FORMATAÇÃO BR) ---
 const carregarRelatorioMensal = async () => {
   const lista = document.getElementById('listaRelatorioMes');
   const filtro = document.getElementById('filtroMesRelatorio');
-  if (!lista) return;
+  if (!lista || !filtro) return;
 
   try {
     const response = await fetch(`${API_URL}/api/transacoes`, {
@@ -115,35 +115,106 @@ const carregarRelatorioMensal = async () => {
     const transacoes = await response.json();
 
     if (response.ok) {
-      const mesSelecionado = filtro.value;
+      // 1. POPULAR OS MESES DINAMICAMENTE (Caso a lista de opções esteja vazia)
+      if (filtro.options.length <= 1 && transacoes.length > 0) {
+        // Extrai todos os anos/meses únicos (ex: "2026-06") presentes nas transações
+        const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao.substring(0, 7)))];
+        
+        // Ordena do mês mais recente para o mais antigo
+        mesesDisponiveis.sort((a, b) => b.localeCompare(a));
 
+        filtro.innerHTML = ''; // Limpa o elemento
+
+        mesesDisponiveis.forEach(anoMes => {
+          const [ano, mes] = anoMes.split('-');
+          // Converte o número do mês em nome por extenso em português
+          const dataObjeto = new Date(ano, parseInt(mes) - 1, 1);
+          const nomeMes = dataObjeto.toLocaleDateString('pt-BR', { month: 'long' });
+          const nomeMesCapitalizado = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+
+          const option = document.createElement('option');
+          option.value = anoMes;
+          option.innerText = `${nomeMesCapitalizado} de ${ano}`;
+          filtro.appendChild(option);
+        });
+
+        // Configura a escuta para atualizar os valores sempre que mudar o select
+        filtro.onchange = () => carregarRelatorioMensal();
+      }
+
+      // Se não houver dados, define o mês padrão corrente
+      if (filtro.options.length === 0) {
+        const mesAtualStr = new Date().toISOString().substring(0, 7);
+        const option = document.createElement('option');
+        option.value = mesAtualStr;
+        option.innerText = "Nenhum histórico ativo";
+        filtro.appendChild(option);
+      }
+
+      // 2. FILTRAGEM E RENDERIZAÇÃO DOS DADOS
+      const mesSelecionado = filtro.value;
       let entradas = 0;
       let saidas = 0;
-
       lista.innerHTML = '';
 
       const filtradas = transacoes.filter(t =>
         t.data_transacao.substring(0, 7) === mesSelecionado
       );
 
+      if (filtradas.length === 0) {
+        lista.innerHTML = '<li class="history-item">Nenhum lançamento neste período.</li>';
+        document.getElementById('resumoReceitas').innerText = 'R$ 0,00';
+        document.getElementById('resumoDespesas').innerText = 'R$ 0,00';
+        document.getElementById('saldoMensal').innerText = 'R$ 0,00';
+        return;
+      }
+
+      // Calcula os acumulados do mês selecionado
       filtradas.forEach(t => {
         const valor = parseFloat(t.valor);
-
         if (t.tipo === 'receita') entradas += valor;
         else saidas += valor;
+      });
+
+      // ORDENAÇÃO: Coloca receitas no topo no relatório mensal também
+      const filtradasEOrdenadas = [...filtradas].sort((a, b) => {
+        if (a.tipo === 'receita' && b.tipo === 'despesa') return -1;
+        if (a.tipo === 'despesa' && b.tipo === 'receita') return 1;
+        return 0;
+      });
+
+      // Renderiza as linhas usando os novos blocos e classes CSS de alinhamento
+      filtradasEOrdenadas.forEach(t => {
+        const valorNum = parseFloat(t.valor);
+        const dataFormatada = new Date(t.data_transacao)
+          .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
         li.className = 'history-item';
+
         li.innerHTML = `
-          <strong>${t.categoria_nome}</strong> - ${t.descricao || ''}
-          <span>${valor.toFixed(2)}</span>
+          <div class="info-esquerda">
+            <strong>${t.categoria_nome}</strong>
+            <small>${t.descricao || ''} (${dataFormatada})</small>
+          </div>
+          <div class="info-direita">
+            <span class="item-amount ${t.tipo}">
+              ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
+            </span>
+            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'relatorio')">
+              🗑️
+            </button>
+          </div>
         `;
         lista.appendChild(li);
       });
 
-      document.getElementById('resumoReceitas').innerText = entradas.toFixed(2);
-      document.getElementById('resumoDespesas').innerText = saidas.toFixed(2);
-      document.getElementById('saldoMensal').innerText = (entradas - saidas).toFixed(2);
+      // Aplica a formatação em Real brasileiro (R$ 0,00) nos blocos superiores
+      document.getElementById('resumoReceitas').innerText = `R$ ${entradas.toFixed(2).replace('.', ',')}`;
+      document.getElementById('resumoDespesas').innerText = `R$ ${saidas.toFixed(2).replace('.', ',')}`;
+      
+      const saldoMensalTotal = entradas - saidas;
+      document.getElementById('saldoMensal').innerText = `R$ ${saldoMensalTotal.toFixed(2).replace('.', ',')}`;
     }
   } catch (err) {
     console.error(err);
@@ -216,12 +287,3 @@ if (form) {
 }
 
 
-// --- INIT ---
-document.addEventListener('DOMContentLoaded', () => {
-  carregarDashboardGeral();
-  carregarRelatorioMensal();
-  carregarCategoriasForm();
-
-  const input = document.getElementById('data');
-  if (input) input.value = new Date().toISOString().split('T')[0];
-});
