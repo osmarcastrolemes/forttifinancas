@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Finanças da Casa</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <div class="balance-card">
+      <p>Saldo Atual da Casa</p>
+      <h1 id="totalBalance">R$ 0,00</h1>
+    </div>
+
+    <h3>Histórico Recente</h3>
+    <ul class="history-list" id="historyList">
+      <!-- Preenchido via JavaScript -->
+    </ul>
+
+   <nav class="nav-bottom">
+  <a href="dashboard.html">📊 Início</a>
+  <a href="relatorios.html">📅 Mensal</a> <!-- Botão Novo -->
+  <a href="lancamento.html">➕ Novo Gasto</a>
+  <a href="#" id="logoutBtn">❌ Sair</a>
+</nav>
+
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>
