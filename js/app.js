@@ -1,4 +1,4 @@
-const API_URL = 'https://onrender.com';
+const API_URL = 'https://sistema-financas-backend.onrender.com';
 const token = localStorage.getItem('token');
 
 // Se não estiver logado, redireciona
