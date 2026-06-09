@@ -22,28 +22,11 @@ configurarLogout('logoutBtn2');
 configurarLogout('logoutBtn3');
 
 
-// --- FUNÇÃO AUXILIAR: TRATAMENTO SEGURO DE DATA ---
-const formatarDataSegura = (dataStr) => {
-  if (!dataStr) return 'S/D';
-  try {
-    const dataObjeto = new Date(dataStr);
-    if (!isNaN(dataObjeto.getTime())) {
-      return dataObjeto.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-    }
-    const parteData = dataStr.substring(0, 10);
-    const [ano, mes, dia] = parteData.split('-');
-    return `${dia}/${mes}/${ano}`;
-  } catch (e) {
-    return 'S/D';
-  }
-};
-
-
-// --- DASHBOARD (ATUALIZADO) ---
+// --- DASHBOARD (ATUALIZADO: ORDENAÇÃO E ALINHAMENTO) ---
 const carregarDashboardGeral = async () => {
   const totalBalance = document.getElementById('totalBalance');
   const historyList = document.getElementById('historyList');
-  if (!historyList) return; // Aborta silenciosamente se não estiver na página index/dashboard
+  if (!historyList) return;
 
   try {
     const response = await fetch(`${API_URL}/api/transacoes`, {
@@ -56,56 +39,54 @@ const carregarDashboardGeral = async () => {
       let saldoTotal = 0;
       historyList.innerHTML = '';
 
-      if (!Array.isArray(transacoes) || transacoes.length === 0) {
+      if (transacoes.length === 0) {
         historyList.innerHTML = '<li class="history-item">Nenhum lançamento encontrado.</li>';
-        if (totalBalance) totalBalance.innerText = "R$ 0,00";
+        totalBalance.innerText = "R$ 0,00";
         return;
       }
 
+      // 1. PASSO IMPORTANTE: Calcula o saldo total baseado na lista completa original
       transacoes.forEach(t => {
         const valorNum = parseFloat(t.valor);
         if (t.tipo === 'receita') saldoTotal += valorNum;
         else saldoTotal -= valorNum;
       });
 
+      // 2. ORDENAÇÃO: Cria uma cópia e põe as receitas no topo da lista visual
       const transacoesOrdenadas = [...transacoes].sort((a, b) => {
         if (a.tipo === 'receita' && b.tipo === 'despesa') return -1;
         if (a.tipo === 'despesa' && b.tipo === 'receita') return 1;
         return 0;
       });
 
+      // 3. RENDERIZAÇÃO: Monta os itens ordenados na tela com as novas classes limpas
       transacoesOrdenadas.forEach(t => {
         const valorNum = parseFloat(t.valor);
-        const dataFormatada = formatarDataSegura(t.data_transacao);
+        const dataFormatada = new Date(t.data_transacao)
+          .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
-        li.className = 'history-item';
+        li.className = 'history-item'; // Garante o flexbox no CSS
 
         li.innerHTML = `
           <div class="info-esquerda">
-            <strong>${t.categoria_nome || 'Outros'}</strong>
+            <strong>${t.categoria_nome}</strong>
             <small>${t.descricao || ''} (${dataFormatada})</small>
           </div>
           <div class="info-direita">
             <span class="item-amount ${t.tipo}">
               ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
             </span>
-            <div class="acoes-botoes" style="display: flex; gap: 8px; align-items: center;">
-              <button class="btn-editar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="editarTransacaoPrompt(${t.id}, '${t.descricao || ''}', ${valorNum}, 'dashboard')">
-                📝
-              </button>
-              <button class="btn-deletar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="excluirTransacao(${t.id}, 'dashboard')">
-                🗑️
-              </button>
-            </div>
+            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'dashboard')">
+              🗑️
+            </button>
           </div>
         `;
         historyList.appendChild(li);
       });
 
-      if (totalBalance) {
-        totalBalance.innerText = `R$ ${saldoTotal.toFixed(2).replace('.', ',')}`;
-      }
+      // Atualiza o valor do card e a cor de fundo baseado no saldo total acumulado
+      totalBalance.innerText = `R$ ${saldoTotal.toFixed(2).replace('.', ',')}`;
 
       const balanceCard = document.querySelector('.balance-card');
       if (balanceCard) {
@@ -124,7 +105,7 @@ const carregarDashboardGeral = async () => {
 const carregarRelatorioMensal = async () => {
   const lista = document.getElementById('listaRelatorioMes');
   const filtro = document.getElementById('filtroMesRelatorio');
-  if (!lista || !filtro) return; // Aborta silenciosamente se não estiver na página de relatórios
+  if (!lista || !filtro) return;
 
   try {
     const response = await fetch(`${API_URL}/api/transacoes`, {
@@ -134,10 +115,9 @@ const carregarRelatorioMensal = async () => {
     const transacoes = await response.json();
 
     if (response.ok) {
-      if (!Array.isArray(transacoes) || transacoes.length === 0) return;
-
+      // 1. POPULAR OS MESES DINAMICAMENTE
       if (filtro.options.length <= 0 && transacoes.length > 0) {
-        const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao ? t.data_transacao.substring(0, 7) : ''))].filter(Boolean);
+        const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao.substring(0, 7)))];
         
         mesesDisponiveis.sort((a, b) => b.localeCompare(a));
         filtro.innerHTML = ''; 
@@ -157,13 +137,22 @@ const carregarRelatorioMensal = async () => {
         filtro.onchange = () => carregarRelatorioMensal();
       }
 
+      if (filtro.options.length === 0) {
+        const mesAtualStr = new Date().toISOString().substring(0, 7);
+        const option = document.createElement('option');
+        option.value = mesAtualStr;
+        option.innerText = "Nenhum histórico ativo";
+        filtro.appendChild(option);
+      }
+
+      // 2. FILTRAGEM E RENDERIZAÇÃO
       const mesSelecionado = filtro.value;
       let entradas = 0;
       let saidas = 0;
       lista.innerHTML = '';
 
       const filtradas = transacoes.filter(t =>
-        t.data_transacao && t.data_transacao.substring(0, 7) === mesSelecionado
+        t.data_transacao.substring(0, 7) === mesSelecionado
       );
 
       if (filtradas.length === 0) {
@@ -188,28 +177,24 @@ const carregarRelatorioMensal = async () => {
 
       filtradasEOrdenadas.forEach(t => {
         const valorNum = parseFloat(t.valor);
-        const dataFormatada = formatarDataSegura(t.data_transacao);
+        const dataFormatada = new Date(t.data_transacao)
+          .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
         li.className = 'history-item';
 
         li.innerHTML = `
           <div class="info-esquerda">
-            <strong>${t.categoria_nome || 'Outros'}</strong>
+            <strong>${t.categoria_nome}</strong>
             <small>${t.descricao || ''} (${dataFormatada})</small>
           </div>
           <div class="info-direita">
             <span class="item-amount ${t.tipo}">
               ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
             </span>
-            <div class="acoes-botoes" style="display: flex; gap: 8px; align-items: center;">
-              <button class="btn-editar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="editarTransacaoPrompt(${t.id}, '${t.descricao || ''}', ${valorNum}, 'relatorio')">
-                📝
-              </button>
-              <button class="btn-deletar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="excluirTransacao(${t.id}, 'relatorio')">
-                🗑️
-              </button>
-            </div>
+            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'relatorio')">
+              🗑️
+            </button>
           </div>
         `;
         lista.appendChild(li);
@@ -227,55 +212,77 @@ const carregarRelatorioMensal = async () => {
 };
 
 
-// --- REQUISIÇÃO DE EDIÇÃO INTERATIVA ---
-window.editarTransacaoPrompt = async (id, descricaoAtual, valorAtual, origem) => {
-  const novaDescricao = prompt("Digite a nova descrição:", descricaoAtual);
-  if (novaDescricao === null) return; 
-
-  const novoValorStr = prompt("Digite o novo valor (use ponto para centavos):", valorAtual);
-  if (novoValorStr === null) return;
-
-  const novoValor = parseFloat(novoValorStr.replace(',', '.'));
-  if (isNaN(novoValor)) {
-    alert("Valor inválido.");
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/api/transacoes/${id}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        descricao: novaDescricao,
-        valor: novoValor
-      })
-    });
-
-    if (response.ok) {
-      alert("Lançamento atualizado com sucesso!");
-      if (origem === 'dashboard') carregarDashboardGeral();
-      if (origem === 'relatorio') carregarRelatorioMensal();
-    } else {
-      const data = await response.json();
-      alert(data.erro || "Erro ao atualizar registro.");
-    }
-  } catch (error) {
-    console.error(error);
-    alert("Erro ao conectar com o servidor.");
-  }
-};
-
-
 // --- EXCLUIR ---
 window.excluirTransacao = async (id, origem) => {
   if (!confirm('Deseja excluir?')) return;
 
-  try {
-    await fetch(`${API_URL}/api/transacoes/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
+  await fetch(`${API_URL}/api/transacoes/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  if (origem === 'dashboard') carregarDashboardGeral();
+  if (origem === 'relatorio') carregarRelatorioMensal();
+};
+
+
+// --- CATEGORIAS ---
+const carregarCategoriasForm = async () => {
+  const select = document.getElementById('categoria');
+  if (!select) return;
+
+  const res = await fetch(`${API_URL}/api/categorias`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  const categorias = await res.json();
+
+  select.innerHTML = categorias
+    .map(c => `<option value="${c.id}">${c.nome}</option>`)
+    .join('');
+};
+
+
+// --- FORM LANÇAMENTO ---
+const form = document.getElementById('lancamentoForm');
+if (form) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const body = {
+      tipo: document.getElementById('tipo').value,
+      valor: document.getElementById('valor').value,
+      categoria_id: document.getElementById('categoria').value,
+      data_transacao: document.getElementById('data').value,
+      descricao: document.getElementById('descricao').value
+    };
+
+    const res = await fetch(`${API_URL}/api/transacoes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
     });
 
+    if (res.ok) {
+      alert('Salvo!');
+      window.location.href = 'dashboard.html';
+    } else {
+      const data = await res.json();
+      alert(data.erro);
+    }
+  });
+}
+
+
+// --- INIT ---
+document.addEventListener('DOMContentLoaded', () => {
+  carregarDashboardGeral();
+  carregarRelatorioMensal();
+  carregarCategoriasForm();
+
+  const input = document.getElementById('data');
+  if (input) input.value = new Date().toISOString().split('T')[0];
+});
