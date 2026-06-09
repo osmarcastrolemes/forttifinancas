@@ -22,7 +22,7 @@ configurarLogout('logoutBtn2');
 configurarLogout('logoutBtn3');
 
 
-// --- DASHBOARD (ATUALIZADO: ORDENAÇÃO E ALINHAMENTO) ---
+// --- DASHBOARD ---
 const carregarDashboardGeral = async () => {
   const totalBalance = document.getElementById('totalBalance');
   const historyList = document.getElementById('historyList');
@@ -45,28 +45,25 @@ const carregarDashboardGeral = async () => {
         return;
       }
 
-      // 1. PASSO IMPORTANTE: Calcula o saldo total baseado na lista completa original
       transacoes.forEach(t => {
         const valorNum = parseFloat(t.valor);
         if (t.tipo === 'receita') saldoTotal += valorNum;
         else saldoTotal -= valorNum;
       });
 
-      // 2. ORDENAÇÃO: Cria uma cópia e põe as receitas no topo da lista visual
       const transacoesOrdenadas = [...transacoes].sort((a, b) => {
         if (a.tipo === 'receita' && b.tipo === 'despesa') return -1;
         if (a.tipo === 'despesa' && b.tipo === 'receita') return 1;
         return 0;
       });
 
-      // 3. RENDERIZAÇÃO: Monta os itens ordenados na tela com as novas classes limpas
       transacoesOrdenadas.forEach(t => {
         const valorNum = parseFloat(t.valor);
         const dataFormatada = new Date(t.data_transacao)
           .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
-        li.className = 'history-item'; // Garante o flexbox no CSS
+        li.className = 'history-item';
 
         li.innerHTML = `
           <div class="info-esquerda">
@@ -77,15 +74,13 @@ const carregarDashboardGeral = async () => {
             <span class="item-amount ${t.tipo}">
               ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
             </span>
-            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'dashboard')">
-              🗑️
-            </button>
+            <button class="btn-editar-dash" onclick="editarTransacao(${t.id})">✏️</button>
+            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'dashboard')">🗑️</button>
           </div>
         `;
         historyList.appendChild(li);
       });
 
-      // Atualiza o valor do card e a cor de fundo baseado no saldo total acumulado
       totalBalance.innerText = `R$ ${saldoTotal.toFixed(2).replace('.', ',')}`;
 
       const balanceCard = document.querySelector('.balance-card');
@@ -101,7 +96,7 @@ const carregarDashboardGeral = async () => {
 };
 
 
-// --- RELATÓRIO MENSAL (ATUALIZADO) ---
+// --- RELATÓRIO MENSAL ---
 const carregarRelatorioMensal = async () => {
   const lista = document.getElementById('listaRelatorioMes');
   const filtro = document.getElementById('filtroMesRelatorio');
@@ -115,7 +110,6 @@ const carregarRelatorioMensal = async () => {
     const transacoes = await response.json();
 
     if (response.ok) {
-      // 1. POPULAR OS MESES DINAMICAMENTE
       if (filtro.options.length <= 0 && transacoes.length > 0) {
         const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao.substring(0, 7)))];
         
@@ -145,7 +139,6 @@ const carregarRelatorioMensal = async () => {
         filtro.appendChild(option);
       }
 
-      // 2. FILTRAGEM E RENDERIZAÇÃO
       const mesSelecionado = filtro.value;
       let entradas = 0;
       let saidas = 0;
@@ -192,9 +185,8 @@ const carregarRelatorioMensal = async () => {
             <span class="item-amount ${t.tipo}">
               ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
             </span>
-            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'relatorio')">
-              🗑️
-            </button>
+            <button class="btn-editar-dash" onclick="editarTransacao(${t.id})">✏️</button>
+            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'relatorio')">🗑️</button>
           </div>
         `;
         lista.appendChild(li);
@@ -226,6 +218,12 @@ window.excluirTransacao = async (id, origem) => {
 };
 
 
+// --- EDITAR ---
+window.editarTransacao = (id) => {
+  window.location.href = `lancamento.html?id=${id}`;
+};
+
+
 // --- CATEGORIAS ---
 const carregarCategoriasForm = async () => {
   const select = document.getElementById('categoria');
@@ -246,6 +244,39 @@ const carregarCategoriasForm = async () => {
 // --- FORM LANÇAMENTO ---
 const form = document.getElementById('lancamentoForm');
 if (form) {
+  const params = new URLSearchParams(window.location.search);
+  const editandoId = params.get('id');
+
+  // Se for edição, busca os dados e pré-preenche o formulário
+  if (editandoId) {
+    document.querySelector('h2').innerText = 'Editar Lançamento';
+    document.querySelector('button[type="submit"]').innerText = 'Atualizar Registro';
+
+    fetch(`${API_URL}/api/transacoes/${editandoId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(t => {
+      document.getElementById('tipo').value = t.tipo;
+      document.getElementById('valor').value = t.valor;
+      document.getElementById('data').value = t.data_transacao.substring(0, 10);
+      document.getElementById('descricao').value = t.descricao || '';
+
+      // Aguarda as categorias carregarem para selecionar a correta
+      const tentarSelecionarCategoria = setInterval(() => {
+        const select = document.getElementById('categoria');
+        if (select && select.options.length > 0) {
+          select.value = t.categoria_id;
+          clearInterval(tentarSelecionarCategoria);
+        }
+      }, 100);
+    })
+    .catch(err => {
+      console.error('Erro ao carregar transação:', err);
+      alert('Não foi possível carregar os dados do registro.');
+    });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -257,8 +288,15 @@ if (form) {
       descricao: document.getElementById('descricao').value
     };
 
-    const res = await fetch(`${API_URL}/api/transacoes`, {
-      method: 'POST',
+    // PUT se editando, POST se novo
+    const url = editandoId
+      ? `${API_URL}/api/transacoes/${editandoId}`
+      : `${API_URL}/api/transacoes`;
+
+    const method = editandoId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -267,7 +305,7 @@ if (form) {
     });
 
     if (res.ok) {
-      alert('Salvo!');
+      alert(editandoId ? 'Atualizado!' : 'Salvo!');
       window.location.href = 'dashboard.html';
     } else {
       const data = await res.json();
@@ -284,5 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarCategoriasForm();
 
   const input = document.getElementById('data');
-  if (input) input.value = new Date().toISOString().split('T')[0];
+  if (input && !new URLSearchParams(window.location.search).get('id')) {
+    input.value = new Date().toISOString().split('T')[0];
+  }
 });
