@@ -20,7 +20,7 @@ body {
   overflow-x: hidden;
 }
 
-/* --- PAGE WRAPPER --- */
+/* --- PAGE WRAPPER (login/cadastro) --- */
 .page-wrapper {
   display: flex;
   flex-direction: column;
@@ -32,7 +32,7 @@ body {
   gap: 12px;
 }
 
-/* --- CONTAINER PADRÃO (dashboard, lançamento, etc) --- */
+/* --- CONTAINER PADRÃO --- */
 .app-container {
   width: 100%;
   max-width: 412px;
@@ -41,18 +41,17 @@ body {
   flex-direction: column;
   padding: 24px 24px 84px 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   margin: 20px auto;
   position: relative;
   min-height: calc(100vh - 40px);
 }
 
-/* --- CONTAINER DE LOGIN/CADASTRO --- */
+/* --- CONTAINER LOGIN/CADASTRO --- */
 .app-container.login-container {
   min-height: unset;
   padding-bottom: 28px;
   margin: 0 auto;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* --- LOGO --- */
@@ -82,6 +81,18 @@ h2 {
   font-size: 22px;
 }
 
+/* --- TÍTULOS DE SEÇÃO --- */
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 4px;
+}
+
 /* --- INPUTS --- */
 .input-group {
   margin-bottom: 16px;
@@ -95,7 +106,8 @@ h2 {
   color: #444;
 }
 
-.input-group input, .input-group select {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 12px;
   border: 1px solid #ddd;
@@ -169,16 +181,74 @@ button:active, .btn-submit:active {
   color: #999;
 }
 
-/* --- DASHBOARD --- */
+/* --- BALANCE CARD --- */
 .balance-card {
   background: linear-gradient(135deg, #388e3c, #2e7d32);
   color: white;
   padding: 20px;
   border-radius: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   text-align: center;
 }
 
+.balance-card p {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.balance-card h1,
+.balance-card h2 {
+  color: white;
+  margin: 0;
+}
+
+/* --- MINI CARDS RECEITA/DESPESA --- */
+.resumo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.resumo-card {
+  padding: 12px 14px;
+  border-radius: 8px;
+  text-align: center;
+  border-left: 4px solid transparent;
+}
+
+.resumo-card.receita {
+  background: #e8f5e9;
+  border-left-color: #2e7d32;
+}
+
+.resumo-card.despesa {
+  background: #ffebee;
+  border-left-color: #d32f2f;
+}
+
+.resumo-card small {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.resumo-card.receita small { color: #2e7d32; }
+.resumo-card.despesa small { color: #c62828; }
+
+.resumo-card h3 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.resumo-card.receita h3 { color: #2e7d32; }
+.resumo-card.despesa h3 { color: #c62828; }
+
+/* --- HISTORY LIST --- */
 .history-list {
   list-style: none;
   overflow-y: auto;
@@ -189,8 +259,19 @@ button:active, .btn-submit:active {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #eee;
+  padding: 12px 0 12px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  border-left: 3px solid transparent;
+  margin-bottom: 2px;
+  transition: background 0.15s;
+}
+
+.history-item.receita {
+  border-left-color: var(--revenue);
+}
+
+.history-item.despesa {
+  border-left-color: var(--expense);
 }
 
 .info-esquerda {
@@ -201,13 +282,13 @@ button:active, .btn-submit:active {
 }
 
 .info-esquerda strong {
-  font-size: 16px;
+  font-size: 15px;
   color: #333;
 }
 
 .info-esquerda small {
-  font-size: 13px;
-  color: #777;
+  font-size: 12px;
+  color: #999;
   margin-top: 2px;
 }
 
@@ -221,55 +302,34 @@ button:active, .btn-submit:active {
 
 .item-amount {
   font-weight: bold;
-  font-size: 16px;
+  font-size: 15px;
 }
 
-.item-amount.despesa {
-  color: var(--expense);
-}
+.item-amount.despesa { color: var(--expense); }
+.item-amount.receita { color: var(--revenue); }
 
-.item-amount.receita {
-  color: var(--revenue);
-}
-
-/* --- BOTÕES DE AÇÃO NOS ITENS --- */
-.btn-deletar-dash {
-  background: none;
-  color: var(--expense);
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
-  width: auto;
-  margin-top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-deletar-dash:hover {
-  background: none;
-  color: #b71c1c;
-}
-
+/* --- BOTÕES DE AÇÃO --- */
+.btn-deletar-dash,
 .btn-editar-dash {
   background: none;
-  color: #f57c00;
   border: none;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px;
   padding: 4px;
   width: auto;
   margin-top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
 }
 
-.btn-editar-dash:hover {
-  background: none;
-  color: #e65100;
-}
+.btn-deletar-dash { color: var(--expense); }
+.btn-editar-dash { color: #f57c00; }
+
+.btn-deletar-dash:hover { opacity: 1; background: none; color: #b71c1c; }
+.btn-editar-dash:hover { opacity: 1; background: none; color: #e65100; }
 
 /* --- NAV BOTTOM --- */
 .nav-bottom {
@@ -290,7 +350,19 @@ button:active, .btn-submit:active {
 
 .nav-bottom a {
   text-decoration: none;
-  color: #777;
-  font-size: 14px;
+  color: #aaa;
+  font-size: 13px;
   text-align: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: color 0.2s;
+}
+
+.nav-bottom a:hover {
+  color: var(--primary);
+}
+
+.nav-bottom a.active {
+  color: var(--primary);
+  font-weight: 700;
 }
