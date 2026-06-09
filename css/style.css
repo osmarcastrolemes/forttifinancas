@@ -2,7 +2,7 @@
   --primary: #2e7d32;
   --expense: #d32f2f;
   --revenue: #2e7d32;
-  --background: #f5f5f5;
+  --background: #f0f2f0;
   --surface: #ffffff;
   --text: #333333;
 }
@@ -20,7 +20,7 @@ body {
   overflow-x: hidden;
 }
 
-/* --- AJUSTE DA TELA DE LOGIN (Sem rolagem no mobile) --- */
+/* --- PAGE WRAPPER --- */
 .page-wrapper {
   display: flex;
   flex-direction: column;
@@ -32,7 +32,7 @@ body {
   gap: 12px;
 }
 
-/* Container adaptado para formato mobile e web */
+/* --- CONTAINER PADRÃO (dashboard, lançamento, etc) --- */
 .app-container {
   width: 100%;
   max-width: 412px;
@@ -47,17 +47,30 @@ body {
   min-height: calc(100vh - 40px);
 }
 
-/* Tela de login/cadastro: card compacto, centralizado */
+/* --- CONTAINER DE LOGIN/CADASTRO --- */
 .app-container.login-container {
   min-height: unset;
-  padding-bottom: 24px;
+  padding-bottom: 28px;
   margin: 0 auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* --- LOGO --- */
+.app-logo {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* --- HEADER --- */
+.app-header {
+  margin-bottom: 8px;
 }
 
 .app-header p {
   text-align: center;
   font-size: 14px;
-  color: #666;
+  color: #888;
   margin-top: -16px;
   margin-bottom: 24px;
 }
@@ -66,8 +79,10 @@ h2 {
   margin-bottom: 24px;
   color: var(--primary);
   text-align: center;
+  font-size: 22px;
 }
 
+/* --- INPUTS --- */
 .input-group {
   margin-bottom: 16px;
 }
@@ -77,25 +92,31 @@ h2 {
   margin-bottom: 6px;
   font-size: 14px;
   font-weight: 600;
+  color: #444;
 }
 
 .input-group input, .input-group select {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 16px;
-  background-color: #fcfcfc;
+  background-color: #fff;
+  color: var(--text);
+  transition: border-color 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
 }
 
+/* --- BOTÃO PRINCIPAL --- */
 button, .btn-submit {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   background-color: var(--primary);
   color: white;
   border: none;
@@ -104,17 +125,23 @@ button, .btn-submit {
   font-weight: bold;
   cursor: pointer;
   margin-top: 12px;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
 }
 
 button:hover, .btn-submit:hover {
   background-color: #215d25;
 }
 
+button:active, .btn-submit:active {
+  transform: scale(0.98);
+}
+
+/* --- LINK ALTERNATIVO --- */
 .link-alt {
   text-align: center;
   margin-top: 20px;
   font-size: 14px;
+  color: #666;
 }
 
 .link-alt a {
@@ -127,14 +154,19 @@ button:hover, .btn-submit:hover {
   text-decoration: underline;
 }
 
-/* Rodapé Ajustado para Mobile */
+/* --- RODAPÉ --- */
 .app-footer {
   width: 100%;
   max-width: 412px;
   text-align: center;
   padding: 8px 0;
-  font-size: 12px;
-  color: #666;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.app-footer strong {
+  font-weight: 600;
+  color: #999;
 }
 
 /* --- DASHBOARD --- */
@@ -192,14 +224,15 @@ button:hover, .btn-submit:hover {
   font-size: 16px;
 }
 
-.item-amount.despesa { 
-  color: var(--expense); 
+.item-amount.despesa {
+  color: var(--expense);
 }
 
-.item-amount.receita { 
-  color: var(--revenue); 
+.item-amount.receita {
+  color: var(--revenue);
 }
 
+/* --- BOTÕES DE AÇÃO NOS ITENS --- */
 .btn-deletar-dash {
   background: none;
   color: var(--expense);
@@ -238,6 +271,7 @@ button:hover, .btn-submit:hover {
   color: #e65100;
 }
 
+/* --- NAV BOTTOM --- */
 .nav-bottom {
   position: absolute;
   bottom: 0;
