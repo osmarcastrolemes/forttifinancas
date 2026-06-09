@@ -24,11 +24,12 @@ body {
 .page-wrapper {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   min-height: 100vh;
   min-height: 100dvh;
   padding: 16px;
+  gap: 12px;
 }
 
 /* Container adaptado para formato mobile e web */
@@ -44,6 +45,13 @@ body {
   margin: 20px auto;
   position: relative;
   min-height: calc(100vh - 40px);
+}
+
+/* Tela de login/cadastro: card compacto, centralizado */
+.app-container.login-container {
+  min-height: unset;
+  padding-bottom: 24px;
+  margin: 0 auto;
 }
 
 .app-header p {
