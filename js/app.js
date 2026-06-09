@@ -22,11 +22,28 @@ configurarLogout('logoutBtn2');
 configurarLogout('logoutBtn3');
 
 
-// --- DASHBOARD (ATUALIZADO: COM BOTÃO DE EDIÇÃO) ---
+// --- FUNÇÃO AUXILIAR: TRATAMENTO SEGURO DE DATA ---
+const formatarDataSegura = (dataStr) => {
+  if (!dataStr) return 'S/D';
+  try {
+    const dataObjeto = new Date(dataStr);
+    if (!isNaN(dataObjeto.getTime())) {
+      return dataObjeto.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    }
+    const parteData = dataStr.substring(0, 10);
+    const [ano, mes, dia] = parteData.split('-');
+    return `${dia}/${mes}/${ano}`;
+  } catch (e) {
+    return 'S/D';
+  }
+};
+
+
+// --- DASHBOARD (ATUALIZADO) ---
 const carregarDashboardGeral = async () => {
   const totalBalance = document.getElementById('totalBalance');
   const historyList = document.getElementById('historyList');
-  if (!historyList) return;
+  if (!historyList) return; // Aborta silenciosamente se não estiver na página index/dashboard
 
   try {
     const response = await fetch(`${API_URL}/api/transacoes`, {
@@ -39,38 +56,34 @@ const carregarDashboardGeral = async () => {
       let saldoTotal = 0;
       historyList.innerHTML = '';
 
-      if (transacoes.length === 0) {
+      if (!Array.isArray(transacoes) || transacoes.length === 0) {
         historyList.innerHTML = '<li class="history-item">Nenhum lançamento encontrado.</li>';
-        totalBalance.innerText = "R$ 0,00";
+        if (totalBalance) totalBalance.innerText = "R$ 0,00";
         return;
       }
 
-      // 1. Calcula o saldo total baseado na lista completa original
       transacoes.forEach(t => {
         const valorNum = parseFloat(t.valor);
         if (t.tipo === 'receita') saldoTotal += valorNum;
         else saldoTotal -= valorNum;
       });
 
-      // 2. ORDENAÇÃO: Cria uma cópia e põe as receitas no topo da lista visual
       const transacoesOrdenadas = [...transacoes].sort((a, b) => {
         if (a.tipo === 'receita' && b.tipo === 'despesa') return -1;
         if (a.tipo === 'despesa' && b.tipo === 'receita') return 1;
         return 0;
       });
 
-      // 3. RENDERIZAÇÃO: Monta os itens com botões de Editar e Deletar
       transacoesOrdenadas.forEach(t => {
         const valorNum = parseFloat(t.valor);
-        const dataFormatada = new Date(t.data_transacao)
-          .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        const dataFormatada = formatarDataSegura(t.data_transacao);
 
         const li = document.createElement('li');
         li.className = 'history-item';
 
         li.innerHTML = `
           <div class="info-esquerda">
-            <strong>${t.categoria_nome}</strong>
+            <strong>${t.categoria_nome || 'Outros'}</strong>
             <small>${t.descricao || ''} (${dataFormatada})</small>
           </div>
           <div class="info-direita">
@@ -90,7 +103,9 @@ const carregarDashboardGeral = async () => {
         historyList.appendChild(li);
       });
 
-      totalBalance.innerText = `R$ ${saldoTotal.toFixed(2).replace('.', ',')}`;
+      if (totalBalance) {
+        totalBalance.innerText = `R$ ${saldoTotal.toFixed(2).replace('.', ',')}`;
+      }
 
       const balanceCard = document.querySelector('.balance-card');
       if (balanceCard) {
@@ -105,11 +120,11 @@ const carregarDashboardGeral = async () => {
 };
 
 
-// --- RELATÓRIO MENSAL (ATUALIZADO: COM BOTÃO DE EDIÇÃO) ---
+// --- RELATÓRIO MENSAL (ATUALIZADO) ---
 const carregarRelatorioMensal = async () => {
   const lista = document.getElementById('listaRelatorioMes');
   const filtro = document.getElementById('filtroMesRelatorio');
-  if (!lista || !filtro) return;
+  if (!lista || !filtro) return; // Aborta silenciosamente se não estiver na página de relatórios
 
   try {
     const response = await fetch(`${API_URL}/api/transacoes`, {
@@ -119,8 +134,10 @@ const carregarRelatorioMensal = async () => {
     const transacoes = await response.json();
 
     if (response.ok) {
+      if (!Array.isArray(transacoes) || transacoes.length === 0) return;
+
       if (filtro.options.length <= 0 && transacoes.length > 0) {
-        const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao.substring(0, 7)))];
+        const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao ? t.data_transacao.substring(0, 7) : ''))].filter(Boolean);
         
         mesesDisponiveis.sort((a, b) => b.localeCompare(a));
         filtro.innerHTML = ''; 
@@ -140,21 +157,13 @@ const carregarRelatorioMensal = async () => {
         filtro.onchange = () => carregarRelatorioMensal();
       }
 
-      if (filtro.options.length === 0) {
-        const mesAtualStr = new Date().toISOString().substring(0, 7);
-        const option = document.createElement('option');
-        option.value = mesAtualStr;
-        option.innerText = "Nenhum histórico ativo";
-        filtro.appendChild(option);
-      }
-
       const mesSelecionado = filtro.value;
       let entradas = 0;
       let saidas = 0;
       lista.innerHTML = '';
 
       const filtradas = transacoes.filter(t =>
-        t.data_transacao.substring(0, 7) === mesSelecionado
+        t.data_transacao && t.data_transacao.substring(0, 7) === mesSelecionado
       );
 
       if (filtradas.length === 0) {
@@ -179,15 +188,14 @@ const carregarRelatorioMensal = async () => {
 
       filtradasEOrdenadas.forEach(t => {
         const valorNum = parseFloat(t.valor);
-        const dataFormatada = new Date(t.data_transacao)
-          .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        const dataFormatada = formatarDataSegura(t.data_transacao);
 
         const li = document.createElement('li');
         li.className = 'history-item';
 
         li.innerHTML = `
           <div class="info-esquerda">
-            <strong>${t.categoria_nome}</strong>
+            <strong>${t.categoria_nome || 'Outros'}</strong>
             <small>${t.descricao || ''} (${dataFormatada})</small>
           </div>
           <div class="info-direita">
@@ -219,10 +227,10 @@ const carregarRelatorioMensal = async () => {
 };
 
 
-// --- REQUISIÇÃO DE EDIÇÃO (NOVA FUNÇÃO INTERATIVA) ---
+// --- REQUISIÇÃO DE EDIÇÃO INTERATIVA ---
 window.editarTransacaoPrompt = async (id, descricaoAtual, valorAtual, origem) => {
   const novaDescricao = prompt("Digite a nova descrição:", descricaoAtual);
-  if (novaDescricao === null) return; // Cancela se clicar em cancelar
+  if (novaDescricao === null) return; 
 
   const novoValorStr = prompt("Digite o novo valor (use ponto para centavos):", valorAtual);
   if (novoValorStr === null) return;
@@ -265,14 +273,9 @@ window.editarTransacaoPrompt = async (id, descricaoAtual, valorAtual, origem) =>
 window.excluirTransacao = async (id, origem) => {
   if (!confirm('Deseja excluir?')) return;
 
-  await fetch(`${API_URL}/api/transacoes/${id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  try {
+    await fetch(`${API_URL}/api/transacoes/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
 
-  if (origem === 'dashboard') carregarDashboardGeral();
-  if (origem === 'relatorio') carregarRelatorioMensal();
-};
-
-
-// Executa a carga inicial quando a página carrega
