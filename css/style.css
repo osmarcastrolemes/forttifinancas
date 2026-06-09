@@ -24,10 +24,10 @@ body {
 .page-wrapper {
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Força o rodapé para o fim e o card para o centro */
+  justify-content: space-between;
   align-items: center;
   min-height: 100vh;
-  min-height: 100dvh; /* Altura dinâmica moderna para navegadores mobile */
+  min-height: 100dvh;
   padding: 16px;
 }
 
@@ -38,12 +38,12 @@ body {
   background: var(--surface);
   display: flex;
   flex-direction: column;
-  padding: 24px 24px 84px 24px; /* AJUSTADO: Espaço extra no fundo para a barra de menu não cobrir o conteúdo */
+  padding: 24px 24px 84px 24px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  margin: 20px auto; /* AJUSTADO: Centraliza na horizontal e remove o esmagamento vertical */
-  position: relative; /* AJUSTADO: Mantém o menu preso estritamente ao rodapé deste container */
-  min-height: calc(100vh - 40px); /* AJUSTADO: Ocupa quase a tela inteira de forma harmônica */
+  margin: 20px auto;
+  position: relative;
+  min-height: calc(100vh - 40px);
 }
 
 .app-header p {
@@ -85,7 +85,6 @@ h2 {
   border-color: var(--primary);
 }
 
-/* Seus botões (.btn-submit ou button genérico) */
 button, .btn-submit {
   width: 100%;
   padding: 14px;
@@ -130,7 +129,7 @@ button:hover, .btn-submit:hover {
   color: #666;
 }
 
-/* --- MANUTENÇÃO DOS SEUS ESTILOS DO DASHBOARD (Preservados intactos) --- */
+/* --- DASHBOARD --- */
 .balance-card {
   background: linear-gradient(135deg, #388e3c, #2e7d32);
   color: white;
@@ -176,7 +175,7 @@ button:hover, .btn-submit:hover {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 8px;
   white-space: nowrap;
 }
 
@@ -200,25 +199,51 @@ button:hover, .btn-submit:hover {
   cursor: pointer;
   font-size: 16px;
   padding: 4px;
+  width: auto;
+  margin-top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.btn-deletar-dash:hover {
+  background: none;
+  color: #b71c1c;
+}
+
+.btn-editar-dash {
+  background: none;
+  color: #f57c00;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  width: auto;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-editar-dash:hover {
+  background: none;
+  color: #e65100;
+}
+
 .nav-bottom {
-  position: absolute; /* AJUSTADO: Fixa no rodapé absoluto do container pai */
+  position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
   height: 60px;
   background: white;
   border-top: 1px solid #eee;
-  border-bottom-left-radius: 12px; /* AJUSTADO: Mantém o visual arredondado do card */
-  border-bottom-right-radius: 12px; /* AJUSTADO: Mantém o visual arredondado do card */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 10; /* AJUSTADO: Garante que fique acima de qualquer rolagem da lista */
+  z-index: 10;
 }
 
 .nav-bottom a {
