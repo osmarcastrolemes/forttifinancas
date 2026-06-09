@@ -7,41 +7,31 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
   <div class="page-wrapper">
-    <main class="app-container">
+    <main class="app-container login-container">
       <header class="app-header">
         <h2>Finanças do Lar</h2>
         <p>Gerencie o orçamento da sua casa de forma simples</p>
       </header>
-
       <form id="loginForm">
         <div class="input-group">
           <label for="email">E-mail</label>
-          <!-- Adicionado autocomplete="email" -->
           <input type="email" id="email" required placeholder="fortti@gmail.com" autocomplete="email">
         </div>
-
         <div class="input-group">
           <label for="senha">Senha</label>
-          <!-- Adicionado autocomplete="current-password" -->
           <input type="password" id="senha" required placeholder="••••••" autocomplete="current-password">
         </div>
-
-        <!-- Garantido o type="submit" para o formulário funcionar perfeitamente -->
         <button type="submit" class="btn-submit">Entrar</button>
       </form>
-
       <div class="link-alt">
         Não tem conta? <a href="cadastro.html">Cadastre-se aqui</a>
       </div>
     </main>
-
     <footer class="app-footer">
       <p>Desenvolvido por <strong>Fortti - Osmar de Castro Lemes</strong></p>
     </footer>
   </div>
-
   <script src="js/auth.js"></script>
 </body>
 </html>
