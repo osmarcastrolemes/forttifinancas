@@ -22,7 +22,7 @@ configurarLogout('logoutBtn2');
 configurarLogout('logoutBtn3');
 
 
-// --- DASHBOARD (ATUALIZADO: ORDENAÇÃO E ALINHAMENTO) ---
+// --- DASHBOARD (ATUALIZADO: COM BOTÃO DE EDIÇÃO) ---
 const carregarDashboardGeral = async () => {
   const totalBalance = document.getElementById('totalBalance');
   const historyList = document.getElementById('historyList');
@@ -45,7 +45,7 @@ const carregarDashboardGeral = async () => {
         return;
       }
 
-      // 1. PASSO IMPORTANTE: Calcula o saldo total baseado na lista completa original
+      // 1. Calcula o saldo total baseado na lista completa original
       transacoes.forEach(t => {
         const valorNum = parseFloat(t.valor);
         if (t.tipo === 'receita') saldoTotal += valorNum;
@@ -59,14 +59,14 @@ const carregarDashboardGeral = async () => {
         return 0;
       });
 
-      // 3. RENDERIZAÇÃO: Monta os itens ordenados na tela com as novas classes limpas
+      // 3. RENDERIZAÇÃO: Monta os itens com botões de Editar e Deletar
       transacoesOrdenadas.forEach(t => {
         const valorNum = parseFloat(t.valor);
         const dataFormatada = new Date(t.data_transacao)
           .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
-        li.className = 'history-item'; // Garante o flexbox no CSS
+        li.className = 'history-item';
 
         li.innerHTML = `
           <div class="info-esquerda">
@@ -77,15 +77,19 @@ const carregarDashboardGeral = async () => {
             <span class="item-amount ${t.tipo}">
               ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
             </span>
-            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'dashboard')">
-              🗑️
-            </button>
+            <div class="acoes-botoes" style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn-editar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="editarTransacaoPrompt(${t.id}, '${t.descricao || ''}', ${valorNum}, 'dashboard')">
+                📝
+              </button>
+              <button class="btn-deletar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="excluirTransacao(${t.id}, 'dashboard')">
+                🗑️
+              </button>
+            </div>
           </div>
         `;
         historyList.appendChild(li);
       });
 
-      // Atualiza o valor do card e a cor de fundo baseado no saldo total acumulado
       totalBalance.innerText = `R$ ${saldoTotal.toFixed(2).replace('.', ',')}`;
 
       const balanceCard = document.querySelector('.balance-card');
@@ -101,7 +105,7 @@ const carregarDashboardGeral = async () => {
 };
 
 
-// --- RELATÓRIO MENSAL (ATUALIZADO) ---
+// --- RELATÓRIO MENSAL (ATUALIZADO: COM BOTÃO DE EDIÇÃO) ---
 const carregarRelatorioMensal = async () => {
   const lista = document.getElementById('listaRelatorioMes');
   const filtro = document.getElementById('filtroMesRelatorio');
@@ -115,7 +119,6 @@ const carregarRelatorioMensal = async () => {
     const transacoes = await response.json();
 
     if (response.ok) {
-      // 1. POPULAR OS MESES DINAMICAMENTE
       if (filtro.options.length <= 0 && transacoes.length > 0) {
         const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao.substring(0, 7)))];
         
@@ -145,7 +148,6 @@ const carregarRelatorioMensal = async () => {
         filtro.appendChild(option);
       }
 
-      // 2. FILTRAGEM E RENDERIZAÇÃO
       const mesSelecionado = filtro.value;
       let entradas = 0;
       let saidas = 0;
@@ -192,9 +194,14 @@ const carregarRelatorioMensal = async () => {
             <span class="item-amount ${t.tipo}">
               ${t.tipo === 'receita' ? '+' : '-'} R$ ${valorNum.toFixed(2).replace('.', ',')}
             </span>
-            <button class="btn-deletar-dash" onclick="excluirTransacao(${t.id}, 'relatorio')">
-              🗑️
-            </button>
+            <div class="acoes-botoes" style="display: flex; gap: 8px; align-items: center;">
+              <button class="btn-editar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="editarTransacaoPrompt(${t.id}, '${t.descricao || ''}', ${valorNum}, 'relatorio')">
+                📝
+              </button>
+              <button class="btn-deletar-dash" style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="excluirTransacao(${t.id}, 'relatorio')">
+                🗑️
+              </button>
+            </div>
           </div>
         `;
         lista.appendChild(li);
@@ -208,6 +215,48 @@ const carregarRelatorioMensal = async () => {
     }
   } catch (err) {
     console.error(err);
+  }
+};
+
+
+// --- REQUISIÇÃO DE EDIÇÃO (NOVA FUNÇÃO INTERATIVA) ---
+window.editarTransacaoPrompt = async (id, descricaoAtual, valorAtual, origem) => {
+  const novaDescricao = prompt("Digite a nova descrição:", descricaoAtual);
+  if (novaDescricao === null) return; // Cancela se clicar em cancelar
+
+  const novoValorStr = prompt("Digite o novo valor (use ponto para centavos):", valorAtual);
+  if (novoValorStr === null) return;
+
+  const novoValor = parseFloat(novoValorStr.replace(',', '.'));
+  if (isNaN(novoValor)) {
+    alert("Valor inválido.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/transacoes/${id}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        descricao: novaDescricao,
+        valor: novoValor
+      })
+    });
+
+    if (response.ok) {
+      alert("Lançamento atualizado com sucesso!");
+      if (origem === 'dashboard') carregarDashboardGeral();
+      if (origem === 'relatorio') carregarRelatorioMensal();
+    } else {
+      const data = await response.json();
+      alert(data.erro || "Erro ao atualizar registro.");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao conectar com o servidor.");
   }
 };
 
@@ -226,63 +275,4 @@ window.excluirTransacao = async (id, origem) => {
 };
 
 
-// --- CATEGORIAS ---
-const carregarCategoriasForm = async () => {
-  const select = document.getElementById('categoria');
-  if (!select) return;
-
-  const res = await fetch(`${API_URL}/api/categorias`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-
-  const categorias = await res.json();
-
-  select.innerHTML = categorias
-    .map(c => `<option value="${c.id}">${c.nome}</option>`)
-    .join('');
-};
-
-
-// --- FORM LANÇAMENTO ---
-const form = document.getElementById('lancamentoForm');
-if (form) {
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const body = {
-      tipo: document.getElementById('tipo').value,
-      valor: document.getElementById('valor').value,
-      categoria_id: document.getElementById('categoria').value,
-      data_transacao: document.getElementById('data').value,
-      descricao: document.getElementById('descricao').value
-    };
-
-    const res = await fetch(`${API_URL}/api/transacoes`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (res.ok) {
-      alert('Salvo!');
-      window.location.href = 'dashboard.html';
-    } else {
-      const data = await res.json();
-      alert(data.erro);
-    }
-  });
-}
-
-
-// --- INIT ---
-document.addEventListener('DOMContentLoaded', () => {
-  carregarDashboardGeral();
-  carregarRelatorioMensal();
-  carregarCategoriasForm();
-
-  const input = document.getElementById('data');
-  if (input) input.value = new Date().toISOString().split('T')[0];
-});
+// Executa a carga inicial quando a página carrega
