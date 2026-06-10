@@ -1,7 +1,6 @@
 const API_URL = 'https://sistema-financas-backend.onrender.com';
 const token = localStorage.getItem('token');
 
-// Se não estiver logado, redireciona
 if (!token && !window.location.pathname.includes('index.html') && !window.location.pathname.includes('cadastro.html')) {
   window.location.href = 'index.html';
 }
@@ -37,6 +36,8 @@ const carregarDashboardGeral = async () => {
 
     if (response.ok) {
       let saldoTotal = 0;
+      let totalReceitas = 0;
+      let totalDespesas = 0;
       historyList.innerHTML = '';
 
       if (transacoes.length === 0) {
@@ -47,9 +48,14 @@ const carregarDashboardGeral = async () => {
 
       transacoes.forEach(t => {
         const valorNum = parseFloat(t.valor);
-        if (t.tipo === 'receita') saldoTotal += valorNum;
-        else saldoTotal -= valorNum;
+        if (t.tipo === 'receita') { saldoTotal += valorNum; totalReceitas += valorNum; }
+        else { saldoTotal -= valorNum; totalDespesas += valorNum; }
       });
+
+      const dashReceitas = document.getElementById('dashReceitas');
+      const dashDespesas = document.getElementById('dashDespesas');
+      if (dashReceitas) dashReceitas.innerText = `R$ ${totalReceitas.toFixed(2).replace('.', ',')}`;
+      if (dashDespesas) dashDespesas.innerText = `R$ ${totalDespesas.toFixed(2).replace('.', ',')}`;
 
       const transacoesOrdenadas = [...transacoes].sort((a, b) => {
         if (a.tipo === 'receita' && b.tipo === 'despesa') return -1;
@@ -63,7 +69,7 @@ const carregarDashboardGeral = async () => {
           .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
-        li.className = 'history-item';
+        li.className = `history-item ${t.tipo}`;
 
         li.innerHTML = `
           <div class="info-esquerda">
@@ -112,9 +118,9 @@ const carregarRelatorioMensal = async () => {
     if (response.ok) {
       if (filtro.options.length <= 0 && transacoes.length > 0) {
         const mesesDisponiveis = [...new Set(transacoes.map(t => t.data_transacao.substring(0, 7)))];
-        
+
         mesesDisponiveis.sort((a, b) => b.localeCompare(a));
-        filtro.innerHTML = ''; 
+        filtro.innerHTML = '';
 
         mesesDisponiveis.forEach(anoMes => {
           const [ano, mes] = anoMes.split('-');
@@ -174,7 +180,7 @@ const carregarRelatorioMensal = async () => {
           .toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
         const li = document.createElement('li');
-        li.className = 'history-item';
+        li.className = `history-item ${t.tipo}`;
 
         li.innerHTML = `
           <div class="info-esquerda">
@@ -194,7 +200,7 @@ const carregarRelatorioMensal = async () => {
 
       document.getElementById('resumoReceitas').innerText = `R$ ${entradas.toFixed(2).replace('.', ',')}`;
       document.getElementById('resumoDespesas').innerText = `R$ ${saidas.toFixed(2).replace('.', ',')}`;
-      
+
       const saldoMensalTotal = entradas - saidas;
       document.getElementById('saldoMensal').innerText = `R$ ${saldoMensalTotal.toFixed(2).replace('.', ',')}`;
     }
@@ -247,7 +253,6 @@ if (form) {
   const params = new URLSearchParams(window.location.search);
   const editandoId = params.get('id');
 
-  // Se for edição, busca os dados e pré-preenche o formulário
   if (editandoId) {
     document.querySelector('h2').innerText = 'Editar Lançamento';
     document.querySelector('button[type="submit"]').innerText = 'Atualizar Registro';
@@ -262,7 +267,6 @@ if (form) {
       document.getElementById('data').value = t.data_transacao.substring(0, 10);
       document.getElementById('descricao').value = t.descricao || '';
 
-      // Aguarda as categorias carregarem para selecionar a correta
       const tentarSelecionarCategoria = setInterval(() => {
         const select = document.getElementById('categoria');
         if (select && select.options.length > 0) {
@@ -288,7 +292,6 @@ if (form) {
       descricao: document.getElementById('descricao').value
     };
 
-    // PUT se editando, POST se novo
     const url = editandoId
       ? `${API_URL}/api/transacoes/${editandoId}`
       : `${API_URL}/api/transacoes`;
